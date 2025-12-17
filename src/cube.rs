@@ -82,6 +82,7 @@ pub enum Color {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Rotate {
+    // standard
     U,
     D,
     R,
@@ -94,6 +95,16 @@ pub enum Rotate {
     Lp,
     Fp,
     Bp,
+
+    // movement
+    x,
+    xp,
+    y,
+    z,
+
+    // middle
+    M,
+    Mp,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -102,12 +113,26 @@ pub enum Direction {
     CounterClockwise,
 }
 
+#[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Edge {
-    Top,
-    Right,
-    Bottom,
-    Left,
+    Top = 0,
+    Right = 1,
+    Bottom = 2,
+    Left = 3,
+}
+
+impl Edge {
+    pub const fn rotate(self, amt: i8) -> Self {
+        let new = (self as i8 + amt) as u8 & 0b11;
+        match new {
+            0 => Self::Top,
+            1 => Self::Right,
+            2 => Self::Bottom,
+            3 => Self::Left,
+            _ => unreachable!(),
+        }
+    }
 }
 
 impl Color {
@@ -193,30 +218,79 @@ impl Face {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cube {
     faces: [Face; 6],
+    mapping: [(usize, i8); 6],
 }
 
 impl Cube {
     pub fn solved() -> Self {
-        use Color::*;
-
-        let faces = [
-            Face::from_array(&[Red; 8]),
-            Face::from_array(&[White; 8]),
-            Face::from_array(&[Blue; 8]),
-            Face::from_array(&[Orange; 8]),
-            Face::from_array(&[Green; 8]),
-            Face::from_array(&[Yellow; 8]),
-        ];
-        Self { faces }
+        Self {
+            faces: [
+                Face::from_array(&[Color::Red; 8]),
+                Face::from_array(&[Color::White; 8]),
+                Face::from_array(&[Color::Blue; 8]),
+                Face::from_array(&[Color::Orange; 8]),
+                Face::from_array(&[Color::Green; 8]),
+                Face::from_array(&[Color::Yellow; 8]),
+            ],
+            mapping: [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0)],
+        }
     }
 
     pub fn rotate(&mut self, action: Rotate) {
         use Edge as E;
 
+        // let mapping = [0, 1, 2, 3, 4, 5];
+        // let mapping = [1, 3, 2, 5, 4, 0];
+        // let mapping = [5, 0, 2, 1, 4, 3];
+
         let s1: (usize, Direction);
         let s2: [(usize, E); 4];
 
         match action {
+            Rotate::x => {
+                let temp = self.mapping[0];
+                self.mapping[0] = self.mapping[1];
+                self.mapping[1] = self.mapping[3];
+                self.mapping[3] = self.mapping[5];
+                self.mapping[5] = temp;
+                self.mapping[2].1 += 1;
+                self.mapping[4].1 -= 1;
+                return;
+            }
+            Rotate::xp => {
+                let temp = self.mapping[5];
+                self.mapping[5] = self.mapping[3];
+                self.mapping[3] = self.mapping[1];
+                self.mapping[1] = self.mapping[0];
+                self.mapping[0] = temp;
+                self.mapping[2].1 -= 1;
+                self.mapping[4].1 += 1;
+                return;
+            }
+            Rotate::y => {
+                let temp = self.mapping[0];
+                self.mapping[0] = self.mapping[1];
+                self.mapping[1] = self.mapping[3];
+                self.mapping[3] = self.mapping[5];
+                self.mapping[5] = temp;
+                return;
+            }
+            Rotate::z => {
+                let temp = self.mapping[0];
+                self.mapping[0] = self.mapping[1];
+                self.mapping[1] = self.mapping[3];
+                self.mapping[3] = self.mapping[5];
+                self.mapping[5] = temp;
+                return;
+            }
+            Rotate::M => {
+                self.apply_rotations(&[Rotate::R, Rotate::Lp, Rotate::xp]);
+                return;
+            }
+            Rotate::Mp => {
+                self.apply_rotations(&[Rotate::Rp, Rotate::L, Rotate::x]);
+                return;
+            }
             Rotate::U => {
                 s1 = (1, Direction::Clockwise);
                 s2 = [(0, E::Bottom), (4, E::Top), (3, E::Top), (2, E::Top)];
@@ -268,14 +342,19 @@ impl Cube {
         }
 
         // Step 1 rotate pieces on face
-        self.faces[s1.0].rotate_mut(s1.1);
+        self.faces[self.mapping[s1.0].0].rotate_mut(s1.1);
 
         // Step 2 move pieces between faces
-        let a = self.faces[s2[0].0].get_edge(s2[0].1);
-        let b = self.faces[s2[1].0].set_edge_mut(s2[1].1, a);
-        let c = self.faces[s2[2].0].set_edge_mut(s2[2].1, b);
-        let d = self.faces[s2[3].0].set_edge_mut(s2[3].1, c);
-        self.faces[s2[0].0].set_edge_mut(s2[0].1, d);
+        let a =
+            self.faces[self.mapping[s2[0].0].0].get_edge(s2[0].1.rotate(self.mapping[s2[0].0].1));
+        let b = self.faces[self.mapping[s2[1].0].0]
+            .set_edge_mut(s2[1].1.rotate(self.mapping[s2[1].0].1), a);
+        let c = self.faces[self.mapping[s2[2].0].0]
+            .set_edge_mut(s2[2].1.rotate(self.mapping[s2[2].0].1), b);
+        let d = self.faces[self.mapping[s2[3].0].0]
+            .set_edge_mut(s2[3].1.rotate(self.mapping[s2[3].0].1), c);
+        self.faces[self.mapping[s2[0].0].0]
+            .set_edge_mut(s2[0].1.rotate(self.mapping[s2[0].0].1), d);
     }
 
     pub fn apply_rotations(&mut self, actions: &[Rotate]) {
