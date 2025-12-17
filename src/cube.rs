@@ -98,13 +98,42 @@ pub enum Rotate {
 
     // movement
     x,
-    xp,
     y,
     z,
+    xp,
+    yp,
+    zp,
 
     // middle
     M,
     Mp,
+}
+
+impl Rotate {
+    pub fn prime(self) -> Self {
+        match self {
+            Self::U => Self::Up,
+            Self::D => Self::Dp,
+            Self::R => Self::Rp,
+            Self::L => Self::Lp,
+            Self::F => Self::Fp,
+            Self::B => Self::Bp,
+            Self::Up => Self::U,
+            Self::Dp => Self::D,
+            Self::Rp => Self::R,
+            Self::Lp => Self::L,
+            Self::Fp => Self::F,
+            Self::Bp => Self::B,
+            Self::x => Self::xp,
+            Self::y => Self::yp,
+            Self::z => Self::zp,
+            Self::xp => Self::x,
+            Self::yp => Self::y,
+            Self::zp => Self::z,
+            Self::M => Self::Mp,
+            Self::Mp => Self::M,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -236,8 +265,10 @@ impl Cube {
         }
     }
 
-    pub fn rotate(&mut self, action: Rotate) {
+    pub fn rotate(&mut self, mut action: Rotate) {
         use Edge as E;
+
+        println!("{action:?}");
 
         // let mapping = [0, 1, 2, 3, 4, 5];
         // let mapping = [1, 3, 2, 5, 4, 0];
@@ -339,6 +370,7 @@ impl Cube {
                 s1 = (3, Direction::CounterClockwise);
                 s2 = [(1, E::Top), (4, E::Right), (5, E::Bottom), (2, E::Left)];
             }
+            _ => todo!(),
         }
 
         // Step 1 rotate pieces on face
@@ -400,4 +432,44 @@ impl Cube {
     // pub fn get_face(&self, face: Color) -> &Face {
     //     &self.faces[(face as usize * 3)..((face as usize + 1) * 3)]
     // }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::cube::*;
+
+    #[test]
+    fn t1() {
+        let mut cube = Cube::solved();
+        cube.rotate(Rotate::R);
+        cube.rotate(Rotate::x);
+        cube.rotate(Rotate::U);
+        cube.print();
+
+        let mut cube2 = Cube::solved();
+        cube2.rotate(Rotate::R);
+        cube2.rotate(Rotate::F);
+        cube2.print();
+
+        assert_eq!(cube.faces, cube2.faces);
+    }
+
+    #[test]
+    fn t2() {
+        let mut cube = Cube::solved();
+        cube.rotate(Rotate::Mp);
+        cube.rotate(Rotate::U);
+        cube.rotate(Rotate::Mp);
+        cube.print();
+
+        let mut cube2 = Cube::solved();
+        cube2.rotate(Rotate::Rp);
+        cube2.rotate(Rotate::L);
+        cube2.rotate(Rotate::F);
+        cube2.rotate(Rotate::Rp);
+        cube2.rotate(Rotate::L);
+        cube2.print();
+
+        assert_eq!(cube.faces, cube2.faces);
+    }
 }

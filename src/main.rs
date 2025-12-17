@@ -49,9 +49,6 @@ fn rubiks_maneuver(cube: &mut Cube) {
 
 fn main() {
     let mut cube = Cube::solved();
-    cube.print();
-
-    let mut cube = Cube::solved();
     cube.rotate(Rotate::R);
     cube.rotate(Rotate::x);
     cube.rotate(Rotate::U);
@@ -59,6 +56,6 @@ fn main() {
 
     let mut cube2 = Cube::solved();
     cube2.rotate(Rotate::R);
-    cube2.rotate(Rotate::Fp);
+    cube2.rotate(Rotate::F);
     cube2.print();
 }
