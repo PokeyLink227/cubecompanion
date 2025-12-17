@@ -202,63 +202,35 @@ impl Cube {
     }
 
     pub fn rotate(&mut self, action: Rotate) {
+        use Edge as E;
+
         let s1: (usize, Direction);
-        let s2: [(usize, Edge); 4];
+        let s2: [(usize, E); 4];
 
         match action {
             Rotate::U => {
                 s1 = (1, Direction::Clockwise);
-                s2 = [
-                    (0, Edge::Bottom),
-                    (4, Edge::Top),
-                    (3, Edge::Top),
-                    (2, Edge::Top),
-                ];
+                s2 = [(0, E::Bottom), (4, E::Top), (3, E::Top), (2, E::Top)];
             }
             Rotate::RU => {
                 s1 = (1, Direction::CounterClockwise);
-                s2 = [
-                    (0, Edge::Bottom),
-                    (2, Edge::Top),
-                    (3, Edge::Top),
-                    (4, Edge::Top),
-                ];
+                s2 = [(0, E::Bottom), (2, E::Top), (3, E::Top), (4, E::Top)];
             }
             Rotate::D => {
                 s1 = (5, Direction::Clockwise);
-                s2 = [
-                    (2, Edge::Bottom),
-                    (3, Edge::Bottom),
-                    (4, Edge::Bottom),
-                    (0, Edge::Top),
-                ];
+                s2 = [(2, E::Bottom), (3, E::Bottom), (4, E::Bottom), (0, E::Top)];
             }
             Rotate::RD => {
                 s1 = (5, Direction::CounterClockwise);
-                s2 = [
-                    (2, Edge::Bottom),
-                    (0, Edge::Top),
-                    (4, Edge::Bottom),
-                    (3, Edge::Bottom),
-                ];
+                s2 = [(2, E::Bottom), (0, E::Top), (4, E::Bottom), (3, E::Bottom)];
             }
             Rotate::R => {
                 s1 = (4, Direction::Clockwise);
-                s2 = [
-                    (5, Edge::Right),
-                    (3, Edge::Right),
-                    (1, Edge::Right),
-                    (0, Edge::Right),
-                ];
+                s2 = [(5, E::Right), (3, E::Right), (1, E::Right), (0, E::Right)];
             }
             Rotate::RR => {
                 s1 = (4, Direction::CounterClockwise);
-                s2 = [
-                    (5, Edge::Right),
-                    (0, Edge::Right),
-                    (1, Edge::Right),
-                    (3, Edge::Right),
-                ];
+                s2 = [(5, E::Right), (0, E::Right), (1, E::Right), (3, E::Right)];
             }
 
             _ => todo!(),
