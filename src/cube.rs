@@ -192,10 +192,12 @@ impl Face {
     fn rotate_mut(&mut self, dir: Direction) {
         match dir {
             Direction::Clockwise => {
-                *self = Face(((self.0 >> 6) & 0b111111111111111111) | ((self.0 & 0b111111) << 18));
+                let temp = ((self.0 >> 6) & 0b111111111111111111) | ((self.0 & 0b111111) << 18);
+                *self = Face(temp & 0b111_111_111_111_111_111_111_111);
             }
             Direction::CounterClockwise => {
-                *self = Face((self.0 << 6) | (self.0 >> 18));
+                let temp = (self.0 << 6) | (self.0 >> 18);
+                *self = Face(temp & 0b111_111_111_111_111_111_111_111);
             }
         }
     }
@@ -468,6 +470,57 @@ mod tests {
         cube2.rotate(Rotate::F);
         cube2.rotate(Rotate::Rp);
         cube2.rotate(Rotate::L);
+        cube2.print();
+
+        assert_eq!(cube.faces, cube2.faces);
+    }
+
+    #[test]
+    fn rubiks() {
+        let mut cube = Cube::solved();
+        cube.apply_rotations(&[
+            Rotate::Rp,
+            Rotate::L,
+            Rotate::Fp,
+            Rotate::Rp,
+            Rotate::L,
+            Rotate::Dp,
+            Rotate::Rp,
+            Rotate::L,
+            Rotate::B,
+            Rotate::B,
+            // second half
+            Rotate::R,
+            Rotate::Lp,
+            Rotate::Dp,
+            Rotate::R,
+            Rotate::Lp,
+            Rotate::Fp,
+            Rotate::R,
+            Rotate::Lp,
+            Rotate::U,
+            Rotate::U,
+        ]);
+        cube.print();
+
+        let mut cube2 = Cube::solved();
+        cube2.apply_rotations(&[
+            Rotate::Mp,
+            Rotate::Up,
+            Rotate::Mp,
+            Rotate::Up,
+            Rotate::Mp,
+            Rotate::Up,
+            Rotate::Up,
+            // second half
+            Rotate::M,
+            Rotate::Up,
+            Rotate::M,
+            Rotate::Up,
+            Rotate::M,
+            Rotate::Up,
+            Rotate::Up,
+        ]);
         cube2.print();
 
         assert_eq!(cube.faces, cube2.faces);
