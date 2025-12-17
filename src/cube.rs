@@ -88,12 +88,12 @@ pub enum Rotate {
     L,
     F,
     B,
-    RU,
-    RD,
-    RR,
-    RL,
-    RF,
-    RB,
+    Up,
+    Dp,
+    Rp,
+    Lp,
+    Fp,
+    Bp,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -221,7 +221,7 @@ impl Cube {
                 s1 = (1, Direction::Clockwise);
                 s2 = [(0, E::Bottom), (4, E::Top), (3, E::Top), (2, E::Top)];
             }
-            Rotate::RU => {
+            Rotate::Up => {
                 s1 = (1, Direction::CounterClockwise);
                 s2 = [(0, E::Bottom), (2, E::Top), (3, E::Top), (4, E::Top)];
             }
@@ -229,7 +229,7 @@ impl Cube {
                 s1 = (5, Direction::Clockwise);
                 s2 = [(2, E::Bottom), (3, E::Bottom), (4, E::Bottom), (0, E::Top)];
             }
-            Rotate::RD => {
+            Rotate::Dp => {
                 s1 = (5, Direction::CounterClockwise);
                 s2 = [(2, E::Bottom), (0, E::Top), (4, E::Bottom), (3, E::Bottom)];
             }
@@ -237,7 +237,7 @@ impl Cube {
                 s1 = (4, Direction::Clockwise);
                 s2 = [(5, E::Right), (3, E::Right), (1, E::Right), (0, E::Right)];
             }
-            Rotate::RR => {
+            Rotate::Rp => {
                 s1 = (4, Direction::CounterClockwise);
                 s2 = [(5, E::Right), (0, E::Right), (1, E::Right), (3, E::Right)];
             }
@@ -245,7 +245,7 @@ impl Cube {
                 s1 = (2, Direction::Clockwise);
                 s2 = [(5, E::Left), (0, E::Left), (1, E::Left), (3, E::Left)];
             }
-            Rotate::RL => {
+            Rotate::Lp => {
                 s1 = (2, Direction::CounterClockwise);
                 s2 = [(5, E::Left), (3, E::Left), (1, E::Left), (0, E::Left)];
             }
@@ -253,7 +253,7 @@ impl Cube {
                 s1 = (3, Direction::Clockwise);
                 s2 = [(1, E::Bottom), (4, E::Left), (5, E::Top), (2, E::Right)];
             }
-            Rotate::RF => {
+            Rotate::Fp => {
                 s1 = (3, Direction::CounterClockwise);
                 s2 = [(1, E::Bottom), (2, E::Right), (5, E::Top), (4, E::Left)];
             }
@@ -261,7 +261,7 @@ impl Cube {
                 s1 = (0, Direction::Clockwise);
                 s2 = [(1, E::Top), (2, E::Left), (5, E::Bottom), (4, E::Right)];
             }
-            Rotate::RB => {
+            Rotate::Bp => {
                 s1 = (3, Direction::CounterClockwise);
                 s2 = [(1, E::Top), (4, E::Right), (5, E::Bottom), (2, E::Left)];
             }
