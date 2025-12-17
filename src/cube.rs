@@ -153,9 +153,9 @@ impl Face {
     const fn get_edge(&self, edge: Edge) -> u32 {
         match edge {
             Edge::Top => (self.0 >> 15) & 0b111_111_111,
-            Edge::Bottom => (self.0 >> 3) & 0b111_111_111,
             Edge::Right => (self.0 >> 9) & 0b111_111_111,
-            _ => todo!(),
+            Edge::Bottom => (self.0 >> 3) & 0b111_111_111,
+            Edge::Left => ((self.0 << 3) | (self.0 >> 21)) & 0b111_111_111,
         }
     }
 
@@ -176,7 +176,12 @@ impl Face {
                 self.0 = (self.0 & !(0b111_111_111 << 9)) | (new << 9);
                 old
             }
-            _ => todo!(),
+            Edge::Left => {
+                let old = ((self.0 << 3) | (self.0 >> 21)) & 0b111_111_111;
+                self.0 = self.0 & !(0b111 << 21) & !(0b111_111);
+                self.0 = self.0 | (new >> 3) | ((new & 0b111) << 21);
+                old
+            }
         }
     }
 }
@@ -232,8 +237,30 @@ impl Cube {
                 s1 = (4, Direction::CounterClockwise);
                 s2 = [(5, E::Right), (0, E::Right), (1, E::Right), (3, E::Right)];
             }
-
-            _ => todo!(),
+            Rotate::L => {
+                s1 = (2, Direction::Clockwise);
+                s2 = [(5, E::Left), (0, E::Left), (1, E::Left), (3, E::Left)];
+            }
+            Rotate::RL => {
+                s1 = (2, Direction::CounterClockwise);
+                s2 = [(5, E::Left), (3, E::Left), (1, E::Left), (0, E::Left)];
+            }
+            Rotate::F => {
+                s1 = (3, Direction::Clockwise);
+                s2 = [(1, E::Bottom), (4, E::Left), (5, E::Top), (2, E::Right)];
+            }
+            Rotate::RF => {
+                s1 = (3, Direction::CounterClockwise);
+                s2 = [(1, E::Bottom), (2, E::Right), (5, E::Top), (4, E::Left)];
+            }
+            Rotate::B => {
+                s1 = (0, Direction::Clockwise);
+                s2 = [(1, E::Top), (2, E::Left), (5, E::Bottom), (4, E::Right)];
+            }
+            Rotate::RB => {
+                s1 = (3, Direction::CounterClockwise);
+                s2 = [(1, E::Top), (4, E::Right), (5, E::Bottom), (2, E::Left)];
+            }
         }
 
         // Step 1 rotate pieces on face
