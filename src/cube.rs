@@ -280,7 +280,7 @@ impl Cube {
         }
     }
 
-    pub fn rotate(&mut self, mut action: Rotate) {
+    pub fn rotate(&mut self, action: Rotate) {
         use Edge as E;
 
         // println!("{action:?}");
@@ -311,22 +311,6 @@ impl Cube {
                 self.mapping[1] = temp;
                 self.mapping[2].1 += 1;
                 self.mapping[5].1 -= 1;
-                return;
-            }
-            Rotate::y => {
-                let temp = self.mapping[0];
-                self.mapping[0] = self.mapping[1];
-                self.mapping[1] = self.mapping[3];
-                self.mapping[3] = self.mapping[5];
-                self.mapping[5] = temp;
-                return;
-            }
-            Rotate::z => {
-                let temp = self.mapping[0];
-                self.mapping[0] = self.mapping[1];
-                self.mapping[1] = self.mapping[3];
-                self.mapping[3] = self.mapping[5];
-                self.mapping[5] = temp;
                 return;
             }
             Rotate::M => {
@@ -527,6 +511,95 @@ mod tests {
         cube2.print();
 
         assert_eq!(cube.faces, cube2.faces);
+    }
+
+    #[test]
+    fn all_moves() {
+        let mut cube = Cube::solved();
+        cube.apply_rotations(&[
+            Rotate::R,
+            Rotate::U,
+            Rotate::Lp,
+            Rotate::D,
+            Rotate::F,
+            Rotate::U,
+            Rotate::Rp,
+            Rotate::B,
+            Rotate::Up,
+            Rotate::F,
+        ]);
+        cube.print();
+
+        use crate::cube::Color as C;
+
+        let target = Cube {
+            faces: [
+                Face::from_array(&[
+                    C::Orange,
+                    C::White,
+                    C::Yellow,
+                    C::White,
+                    C::Red,
+                    C::Red,
+                    C::Red,
+                    C::Orange,
+                ]),
+                Face::from_array(&[
+                    C::Blue,
+                    C::Blue,
+                    C::Green,
+                    C::Yellow,
+                    C::Yellow,
+                    C::White,
+                    C::White,
+                    C::Yellow,
+                ]),
+                Face::from_array(&[
+                    C::Yellow,
+                    C::Red,
+                    C::Green,
+                    C::Red,
+                    C::Red,
+                    C::Orange,
+                    C::Blue,
+                    C::Blue,
+                ]),
+                Face::from_array(&[
+                    C::Blue,
+                    C::Blue,
+                    C::Orange,
+                    C::Green,
+                    C::White,
+                    C::Orange,
+                    C::Orange,
+                    C::Yellow,
+                ]),
+                Face::from_array(&[
+                    C::Blue,
+                    C::White,
+                    C::Green,
+                    C::Green,
+                    C::Orange,
+                    C::Green,
+                    C::Green,
+                    C::Blue,
+                ]),
+                Face::from_array(&[
+                    C::White,
+                    C::Yellow,
+                    C::Yellow,
+                    C::Green,
+                    C::Red,
+                    C::Red,
+                    C::White,
+                    C::Orange,
+                ]),
+            ],
+            mapping: [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0)],
+        };
+        target.print();
+
+        assert_eq!(cube.faces, target.faces);
     }
 
     #[test]
