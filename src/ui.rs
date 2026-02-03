@@ -16,27 +16,21 @@ struct App {}
 fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
     let mut visible_cube = Cube::solved();
     let mut moves = vec![
-        Rotate::Rp,
-        Rotate::L,
-        Rotate::Fp,
-        Rotate::Rp,
-        Rotate::L,
-        Rotate::Dp,
-        Rotate::Rp,
-        Rotate::L,
-        Rotate::B,
-        Rotate::B,
+        Rotate::Mp,
+        Rotate::Up,
+        Rotate::Mp,
+        Rotate::Up,
+        Rotate::Mp,
+        Rotate::Up,
+        Rotate::Up,
         // second half
-        Rotate::R,
-        Rotate::Lp,
-        Rotate::Dp,
-        Rotate::R,
-        Rotate::Lp,
-        Rotate::Fp,
-        Rotate::R,
-        Rotate::Lp,
-        Rotate::U,
-        Rotate::U,
+        Rotate::M,
+        Rotate::Up,
+        Rotate::M,
+        Rotate::Up,
+        Rotate::M,
+        Rotate::Up,
+        Rotate::Up,
     ];
     moves.reverse();
 
@@ -62,6 +56,8 @@ fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
                 KeyCode::Char('L') => visible_cube.rotate(Rotate::Lp),
                 KeyCode::Char('F') => visible_cube.rotate(Rotate::Fp),
                 KeyCode::Char('B') => visible_cube.rotate(Rotate::Bp),
+                KeyCode::Char('x') => visible_cube.rotate(Rotate::x),
+                KeyCode::Char('X') => visible_cube.rotate(Rotate::xp),
                 // handle other key events
                 _ => {}
             },

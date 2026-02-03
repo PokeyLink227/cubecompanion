@@ -177,7 +177,7 @@ impl Color {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Face(u32);
 
 impl Face {
@@ -189,7 +189,20 @@ impl Face {
         Face(buf)
     }
 
-    fn rotate_mut(&mut self, dir: Direction) {
+    const fn rotated(mut self, mut amt: i8) -> Self {
+        while amt > 0 {
+            self.rotate_mut(Direction::Clockwise);
+            amt -= 1;
+        }
+        while amt < 0 {
+            self.rotate_mut(Direction::CounterClockwise);
+            amt += 1;
+        }
+
+        self
+    }
+
+    const fn rotate_mut(&mut self, dir: Direction) {
         match dir {
             Direction::Clockwise => {
                 let temp = ((self.0 >> 6) & 0b111111111111111111) | ((self.0 & 0b111111) << 18);
@@ -206,7 +219,7 @@ impl Face {
     //     (old >> 6 & 0b000_000_111) | (old & 0b000_111_000) | (old << 6 & 0b111_000_000)
     // }
 
-    const fn get_edge(&self, edge: Edge) -> u32 {
+    const fn get_edge(self, edge: Edge) -> u32 {
         match edge {
             Edge::Top => (self.0 >> 15) & 0b111_111_111,
             Edge::Right => (self.0 >> 9) & 0b111_111_111,
@@ -256,12 +269,12 @@ impl Cube {
     pub fn solved() -> Self {
         Self {
             faces: [
-                Face::from_array(&[Color::Red; 8]),
                 Face::from_array(&[Color::White; 8]),
-                Face::from_array(&[Color::Blue; 8]),
                 Face::from_array(&[Color::Orange; 8]),
                 Face::from_array(&[Color::Green; 8]),
                 Face::from_array(&[Color::Yellow; 8]),
+                Face::from_array(&[Color::Red; 8]),
+                Face::from_array(&[Color::Blue; 8]),
             ],
             mapping: [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0)],
         }
@@ -284,20 +297,20 @@ impl Cube {
                 let temp = self.mapping[0];
                 self.mapping[0] = self.mapping[1];
                 self.mapping[1] = self.mapping[3];
-                self.mapping[3] = self.mapping[5];
-                self.mapping[5] = temp;
-                self.mapping[2].1 += 1;
-                self.mapping[4].1 -= 1;
+                self.mapping[3] = self.mapping[4];
+                self.mapping[4] = temp;
+                self.mapping[5].1 += 1;
+                self.mapping[2].1 -= 1;
                 return;
             }
             Rotate::xp => {
-                let temp = self.mapping[5];
-                self.mapping[5] = self.mapping[3];
+                let temp = self.mapping[0];
+                self.mapping[0] = self.mapping[4];
+                self.mapping[4] = self.mapping[3];
                 self.mapping[3] = self.mapping[1];
-                self.mapping[1] = self.mapping[0];
-                self.mapping[0] = temp;
-                self.mapping[2].1 -= 1;
-                self.mapping[4].1 += 1;
+                self.mapping[1] = temp;
+                self.mapping[2].1 += 1;
+                self.mapping[5].1 -= 1;
                 return;
             }
             Rotate::y => {
@@ -325,52 +338,52 @@ impl Cube {
                 return;
             }
             Rotate::U => {
-                s1 = (1, Direction::Clockwise);
-                s2 = [(0, E::Bottom), (4, E::Top), (3, E::Top), (2, E::Top)];
+                s1 = (0, Direction::Clockwise);
+                s2 = [(1, E::Top), (5, E::Top), (4, E::Bottom), (2, E::Top)];
             }
             Rotate::Up => {
-                s1 = (1, Direction::CounterClockwise);
-                s2 = [(0, E::Bottom), (2, E::Top), (3, E::Top), (4, E::Top)];
+                s1 = (0, Direction::CounterClockwise);
+                s2 = [(1, E::Top), (2, E::Top), (4, E::Bottom), (5, E::Top)];
             }
             Rotate::D => {
-                s1 = (5, Direction::Clockwise);
-                s2 = [(2, E::Bottom), (3, E::Bottom), (4, E::Bottom), (0, E::Top)];
+                s1 = (3, Direction::Clockwise);
+                s2 = [(1, E::Bottom), (2, E::Bottom), (4, E::Top), (5, E::Bottom)];
             }
             Rotate::Dp => {
-                s1 = (5, Direction::CounterClockwise);
-                s2 = [(2, E::Bottom), (0, E::Top), (4, E::Bottom), (3, E::Bottom)];
+                s1 = (3, Direction::CounterClockwise);
+                s2 = [(1, E::Bottom), (5, E::Bottom), (4, E::Top), (2, E::Bottom)];
             }
             Rotate::R => {
-                s1 = (4, Direction::Clockwise);
-                s2 = [(5, E::Right), (3, E::Right), (1, E::Right), (0, E::Right)];
+                s1 = (2, Direction::Clockwise);
+                s2 = [(0, E::Right), (4, E::Right), (3, E::Right), (1, E::Right)];
             }
             Rotate::Rp => {
-                s1 = (4, Direction::CounterClockwise);
-                s2 = [(5, E::Right), (0, E::Right), (1, E::Right), (3, E::Right)];
+                s1 = (2, Direction::CounterClockwise);
+                s2 = [(0, E::Right), (1, E::Right), (3, E::Right), (4, E::Right)];
             }
             Rotate::L => {
-                s1 = (2, Direction::Clockwise);
-                s2 = [(5, E::Left), (0, E::Left), (1, E::Left), (3, E::Left)];
+                s1 = (5, Direction::Clockwise);
+                s2 = [(0, E::Left), (1, E::Left), (3, E::Left), (4, E::Left)];
             }
             Rotate::Lp => {
-                s1 = (2, Direction::CounterClockwise);
-                s2 = [(5, E::Left), (3, E::Left), (1, E::Left), (0, E::Left)];
+                s1 = (5, Direction::CounterClockwise);
+                s2 = [(0, E::Left), (4, E::Left), (3, E::Left), (1, E::Left)];
             }
             Rotate::F => {
-                s1 = (3, Direction::Clockwise);
-                s2 = [(1, E::Bottom), (4, E::Left), (5, E::Top), (2, E::Right)];
+                s1 = (1, Direction::Clockwise);
+                s2 = [(0, E::Bottom), (2, E::Left), (3, E::Top), (5, E::Right)];
             }
             Rotate::Fp => {
-                s1 = (3, Direction::CounterClockwise);
-                s2 = [(1, E::Bottom), (2, E::Right), (5, E::Top), (4, E::Left)];
+                s1 = (1, Direction::CounterClockwise);
+                s2 = [(0, E::Bottom), (5, E::Right), (3, E::Top), (2, E::Left)];
             }
             Rotate::B => {
-                s1 = (0, Direction::Clockwise);
-                s2 = [(1, E::Top), (2, E::Left), (5, E::Bottom), (4, E::Right)];
+                s1 = (4, Direction::Clockwise);
+                s2 = [(0, E::Top), (5, E::Left), (3, E::Bottom), (2, E::Right)];
             }
             Rotate::Bp => {
-                s1 = (3, Direction::CounterClockwise);
-                s2 = [(1, E::Top), (4, E::Right), (5, E::Bottom), (2, E::Left)];
+                s1 = (4, Direction::CounterClockwise);
+                s2 = [(0, E::Top), (2, E::Right), (3, E::Bottom), (5, E::Left)];
             }
             _ => todo!(),
         }
@@ -398,7 +411,7 @@ impl Cube {
     }
 
     pub fn to_string(&self) -> String {
-        let offsets = [(10, 1), (10, 5), (2, 9), (10, 9), (18, 9), (10, 13)];
+        let offsets = [(10, 5), (10, 9), (18, 9), (10, 13), (10, 1), (2, 9)];
         let sq_off = [
             (0, 0),
             (2, 0),
@@ -414,13 +427,17 @@ impl Cube {
         let mut ac: [[char; 25]; 17] = ASCIICUBE.clone();
 
         // populate the proper colors
-        for (i, f) in self.faces.iter().enumerate() {
+        // for (i, f) in self.faces.iter().enumerate() {
+        for i in 0..6 {
+            let i_m = self.mapping[i];
+            let f = self.faces[i_m.0].rotated(-i_m.1);
             for sq in 0..8 {
                 let x = offsets[i].0 + sq_off[sq].0;
                 let y = offsets[i].1 + sq_off[sq].1;
                 let c = ((f.0 >> ((7 - sq) * 3)) & 0b0111) as usize;
                 ac[y][x] = colors[c];
             }
+            ac[offsets[i].1 + 1][offsets[i].0 + 2] = colors[i_m.0 + 1];
         }
 
         let mut s = String::with_capacity(25 * 18 + 1 + 3);
@@ -434,7 +451,7 @@ impl Cube {
     }
 
     pub fn print(&self) {
-        let offsets = [(10, 1), (10, 5), (2, 9), (10, 9), (18, 9), (10, 13)];
+        let offsets = [(10, 5), (10, 9), (18, 9), (10, 13), (10, 1), (2, 9)];
         let sq_off = [
             (0, 0),
             (2, 0),
