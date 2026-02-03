@@ -270,7 +270,7 @@ impl Cube {
     pub fn rotate(&mut self, mut action: Rotate) {
         use Edge as E;
 
-        println!("{action:?}");
+        // println!("{action:?}");
 
         // let mapping = [0, 1, 2, 3, 4, 5];
         // let mapping = [1, 3, 2, 5, 4, 0];
@@ -397,6 +397,42 @@ impl Cube {
         }
     }
 
+    pub fn to_string(&self) -> String {
+        let offsets = [(10, 1), (10, 5), (2, 9), (10, 9), (18, 9), (10, 13)];
+        let sq_off = [
+            (0, 0),
+            (2, 0),
+            (4, 0),
+            (4, 1),
+            (4, 2),
+            (2, 2),
+            (0, 2),
+            (0, 1),
+        ];
+        // can optimize by using bytes then transmuting to a str
+        let colors = ['0', 'W', 'O', 'G', 'Y', 'R', 'B', '7'];
+        let mut ac: [[char; 25]; 17] = ASCIICUBE.clone();
+
+        // populate the proper colors
+        for (i, f) in self.faces.iter().enumerate() {
+            for sq in 0..8 {
+                let x = offsets[i].0 + sq_off[sq].0;
+                let y = offsets[i].1 + sq_off[sq].1;
+                let c = ((f.0 >> ((7 - sq) * 3)) & 0b0111) as usize;
+                ac[y][x] = colors[c];
+            }
+        }
+
+        let mut s = String::with_capacity(25 * 18 + 1 + 3);
+        for line in ac {
+            for ch in line {
+                s.push(ch);
+            }
+            s.push('\n');
+        }
+        s
+    }
+
     pub fn print(&self) {
         let offsets = [(10, 1), (10, 5), (2, 9), (10, 9), (18, 9), (10, 13)];
         let sq_off = [
@@ -409,6 +445,7 @@ impl Cube {
             (0, 2),
             (0, 1),
         ];
+        // can optimize by using bytes then transmuting to a str
         let colors = ['0', 'W', 'O', 'G', 'Y', 'R', 'B', '7'];
         let mut ac: [[char; 25]; 17] = ASCIICUBE.clone();
 
