@@ -423,11 +423,61 @@ impl Cube {
                 return;
             }
             Rotate::S => {
-                self.apply_rotations(&[Rotate::B, Rotate::Fp, Rotate::zp]);
+                self.apply_rotations(&[Rotate::B, Rotate::Fp, Rotate::z]);
                 return;
             }
             Rotate::Sp => {
-                self.apply_rotations(&[Rotate::Bp, Rotate::F, Rotate::z]);
+                self.apply_rotations(&[Rotate::Bp, Rotate::F, Rotate::zp]);
+                return;
+            }
+
+            // Wide Moves
+            Rotate::Uw => {
+                self.apply_rotations(&[Rotate::D, Rotate::y]);
+                return;
+            }
+            Rotate::Uwp => {
+                self.apply_rotations(&[Rotate::Dp, Rotate::yp]);
+                return;
+            }
+            Rotate::Dw => {
+                self.apply_rotations(&[Rotate::U, Rotate::yp]);
+                return;
+            }
+            Rotate::Dwp => {
+                self.apply_rotations(&[Rotate::Up, Rotate::y]);
+                return;
+            }
+            Rotate::Rw => {
+                self.apply_rotations(&[Rotate::L, Rotate::x]);
+                return;
+            }
+            Rotate::Rwp => {
+                self.apply_rotations(&[Rotate::Lp, Rotate::xp]);
+                return;
+            }
+            Rotate::Lw => {
+                self.apply_rotations(&[Rotate::R, Rotate::xp]);
+                return;
+            }
+            Rotate::Lwp => {
+                self.apply_rotations(&[Rotate::Rp, Rotate::x]);
+                return;
+            }
+            Rotate::Fw => {
+                self.apply_rotations(&[Rotate::B, Rotate::z]);
+                return;
+            }
+            Rotate::Fwp => {
+                self.apply_rotations(&[Rotate::Bp, Rotate::zp]);
+                return;
+            }
+            Rotate::Bw => {
+                self.apply_rotations(&[Rotate::F, Rotate::z]);
+                return;
+            }
+            Rotate::Bwp => {
+                self.apply_rotations(&[Rotate::Fp, Rotate::zp]);
                 return;
             }
 

@@ -62,6 +62,13 @@ fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
                 KeyCode::Char('Y') => visible_cube.rotate(Rotate::yp),
                 KeyCode::Char('z') => visible_cube.rotate(Rotate::z),
                 KeyCode::Char('Z') => visible_cube.rotate(Rotate::zp),
+
+                KeyCode::Char('m') => visible_cube.rotate(Rotate::M),
+                KeyCode::Char('M') => visible_cube.rotate(Rotate::Mp),
+                KeyCode::Char('e') => visible_cube.rotate(Rotate::E),
+                KeyCode::Char('E') => visible_cube.rotate(Rotate::Ep),
+                KeyCode::Char('s') => visible_cube.rotate(Rotate::S),
+                KeyCode::Char('S') => visible_cube.rotate(Rotate::Sp),
                 // handle other key events
                 _ => {}
             },
