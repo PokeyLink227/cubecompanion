@@ -82,7 +82,7 @@ pub enum Color {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Rotate {
-    // standard
+    // Face Turns
     U,
     D,
     R,
@@ -96,7 +96,7 @@ pub enum Rotate {
     Fp,
     Bp,
 
-    // movement
+    // Cube Roatations
     x,
     y,
     z,
@@ -104,9 +104,27 @@ pub enum Rotate {
     yp,
     zp,
 
-    // middle
+    // Slice Moves
     M,
     Mp,
+    E,
+    Ep,
+    S,
+    Sp,
+
+    // Wide Moves
+    Uw,
+    Uwp,
+    Dw,
+    Dwp,
+    Rw,
+    Rwp,
+    Lw,
+    Lwp,
+    Fw,
+    Fwp,
+    Bw,
+    Bwp,
 }
 
 impl Rotate {
@@ -132,6 +150,22 @@ impl Rotate {
             Self::zp => Self::z,
             Self::M => Self::Mp,
             Self::Mp => Self::M,
+            Self::E => Self::Ep,
+            Self::Ep => Self::E,
+            Self::S => Self::Sp,
+            Self::Sp => Self::S,
+            Self::Uw => Self::Uwp,
+            Self::Dw => Self::Dwp,
+            Self::Rw => Self::Rwp,
+            Self::Lw => Self::Lwp,
+            Self::Fw => Self::Fwp,
+            Self::Bw => Self::Bwp,
+            Self::Uwp => Self::Uw,
+            Self::Dwp => Self::Dw,
+            Self::Rwp => Self::Rw,
+            Self::Lwp => Self::Lw,
+            Self::Fwp => Self::Fw,
+            Self::Bwp => Self::Bw,
         }
     }
 }
@@ -378,6 +412,22 @@ impl Cube {
             }
             Rotate::Mp => {
                 self.apply_rotations(&[Rotate::Rp, Rotate::L, Rotate::x]);
+                return;
+            }
+            Rotate::E => {
+                self.apply_rotations(&[Rotate::U, Rotate::Dp, Rotate::yp]);
+                return;
+            }
+            Rotate::Ep => {
+                self.apply_rotations(&[Rotate::Up, Rotate::D, Rotate::y]);
+                return;
+            }
+            Rotate::S => {
+                self.apply_rotations(&[Rotate::B, Rotate::Fp, Rotate::zp]);
+                return;
+            }
+            Rotate::Sp => {
+                self.apply_rotations(&[Rotate::Bp, Rotate::F, Rotate::z]);
                 return;
             }
 
