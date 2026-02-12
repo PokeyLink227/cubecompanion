@@ -293,6 +293,7 @@ impl Cube {
         let s2: [(usize, E); 4];
 
         match action {
+            // Cube Rotations
             Rotate::x => {
                 let temp = self.mapping[0];
                 self.mapping[0] = self.mapping[1];
@@ -313,6 +314,64 @@ impl Cube {
                 self.mapping[5].1 -= 1;
                 return;
             }
+            Rotate::y => {
+                let temp = self.mapping[1];
+                self.mapping[1] = self.mapping[2];
+                self.mapping[2] = self.mapping[4];
+                self.mapping[4] = self.mapping[5];
+                self.mapping[5] = temp;
+                self.mapping[3].1 += 1;
+                self.mapping[0].1 -= 1;
+
+                self.mapping[2].1 += 2;
+                self.mapping[4].1 += 2;
+                return;
+            }
+            Rotate::yp => {
+                let temp = self.mapping[1];
+                self.mapping[1] = self.mapping[5];
+                self.mapping[5] = self.mapping[4];
+                self.mapping[4] = self.mapping[2];
+                self.mapping[2] = temp;
+                self.mapping[0].1 += 1;
+                self.mapping[3].1 -= 1;
+
+                self.mapping[2].1 += 2;
+                self.mapping[4].1 += 2;
+                return;
+            }
+            Rotate::z => {
+                let temp = self.mapping[0];
+                self.mapping[0] = self.mapping[5];
+                self.mapping[5] = self.mapping[3];
+                self.mapping[3] = self.mapping[2];
+                self.mapping[2] = temp;
+                self.mapping[1].1 -= 1;
+                self.mapping[4].1 += 1;
+
+                self.mapping[0].1 -= 1;
+                self.mapping[2].1 -= 1;
+                self.mapping[3].1 -= 1;
+                self.mapping[5].1 -= 1;
+                return;
+            }
+            Rotate::zp => {
+                let temp = self.mapping[0];
+                self.mapping[0] = self.mapping[2];
+                self.mapping[2] = self.mapping[3];
+                self.mapping[3] = self.mapping[5];
+                self.mapping[5] = temp;
+                self.mapping[1].1 += 1;
+                self.mapping[4].1 -= 1;
+
+                self.mapping[0].1 += 1;
+                self.mapping[2].1 += 1;
+                self.mapping[3].1 += 1;
+                self.mapping[5].1 += 1;
+                return;
+            }
+
+            // Slice Moves
             Rotate::M => {
                 self.apply_rotations(&[Rotate::R, Rotate::Lp, Rotate::xp]);
                 return;
@@ -321,6 +380,8 @@ impl Cube {
                 self.apply_rotations(&[Rotate::Rp, Rotate::L, Rotate::x]);
                 return;
             }
+
+            // Face Turns
             Rotate::U => {
                 s1 = (0, Direction::Clockwise);
                 s2 = [(1, E::Top), (5, E::Top), (4, E::Bottom), (2, E::Top)];
