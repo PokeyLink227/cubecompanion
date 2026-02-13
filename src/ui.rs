@@ -15,23 +15,14 @@ struct App {}
 
 fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
     let mut visible_cube = Cube::solved();
-    let mut moves = vec![
-        Rotate::Mp,
-        Rotate::Up,
-        Rotate::Mp,
-        Rotate::Up,
-        Rotate::Mp,
-        Rotate::Up,
-        Rotate::Up,
-        // second half
-        Rotate::M,
-        Rotate::Up,
-        Rotate::M,
-        Rotate::Up,
-        Rotate::M,
-        Rotate::Up,
-        Rotate::Up,
-    ];
+
+    // let mut moves: Vec<Rotate> = (0..5)
+    //     .map(|_| Rotate::from_num(rand::random_range(0..36)))
+    //     .collect();
+
+    let mut moves = vec![Rotate::S, Rotate::Bp, Rotate::U, Rotate::Bwp, Rotate::yp];
+
+    println!("{:?}", moves);
     moves.reverse();
 
     loop {

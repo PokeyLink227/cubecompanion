@@ -168,6 +168,48 @@ impl Rotate {
             Self::Bwp => Self::Bw,
         }
     }
+
+    pub fn from_num(n: u8) -> Self {
+        match n {
+            0 => Self::U,
+            1 => Self::D,
+            2 => Self::R,
+            3 => Self::L,
+            4 => Self::F,
+            5 => Self::B,
+            6 => Self::Up,
+            7 => Self::Dp,
+            8 => Self::Rp,
+            9 => Self::Lp,
+            10 => Self::Fp,
+            11 => Self::Bp,
+            12 => Self::x,
+            13 => Self::y,
+            14 => Self::z,
+            15 => Self::xp,
+            16 => Self::yp,
+            17 => Self::zp,
+            18 => Self::M,
+            19 => Self::Mp,
+            20 => Self::E,
+            21 => Self::Ep,
+            22 => Self::S,
+            23 => Self::Sp,
+            24 => Self::Uw,
+            25 => Self::Uwp,
+            26 => Self::Dw,
+            27 => Self::Dwp,
+            28 => Self::Rw,
+            29 => Self::Rwp,
+            30 => Self::Lw,
+            31 => Self::Lwp,
+            32 => Self::Fw,
+            33 => Self::Fwp,
+            34 => Self::Bw,
+            35 => Self::Bwp,
+            _ => panic!("num out of range"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -370,8 +412,8 @@ impl Cube {
                 self.mapping[0].1 += 1;
                 self.mapping[3].1 -= 1;
 
-                self.mapping[2].1 += 2;
                 self.mapping[4].1 += 2;
+                self.mapping[5].1 += 2;
                 return;
             }
             Rotate::z => {
@@ -473,11 +515,11 @@ impl Cube {
                 return;
             }
             Rotate::Bw => {
-                self.apply_rotations(&[Rotate::F, Rotate::z]);
+                self.apply_rotations(&[Rotate::F, Rotate::zp]);
                 return;
             }
             Rotate::Bwp => {
-                self.apply_rotations(&[Rotate::Fp, Rotate::zp]);
+                self.apply_rotations(&[Rotate::Fp, Rotate::z]);
                 return;
             }
 
@@ -530,7 +572,6 @@ impl Cube {
                 s1 = (4, Direction::CounterClockwise);
                 s2 = [(0, E::Top), (2, E::Right), (3, E::Bottom), (5, E::Left)];
             }
-            _ => todo!(),
         }
 
         // Step 1 rotate pieces on face
