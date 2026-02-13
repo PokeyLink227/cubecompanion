@@ -492,21 +492,22 @@ impl BasicCube {
             Rotate::Bp,
         ];
 
-        // expansion from current state
-        let mut seen_lhs = FxHashMap::default();
-        seen_lhs.insert(self.clone(), Rotate::None);
-        let mut states_lhs = vec![self.clone()];
-
-        // expansion from target state
-        let mut seen_rhs = FxHashMap::default();
-        seen_rhs.insert(target.clone(), Rotate::None);
-        let mut states_rhs = vec![target.clone()];
-
+        const FROM_LEFT: u8 = 1;
+        const FROM_RIGHT: u8 = 2;
+        let mut seen = FxHashMap::default();
         let mut new_states = Vec::new();
-
         let mut states_explored: usize = 1;
         let mut depth: usize = 1;
 
+        // expansion from current state
+        seen.insert(self.clone(), (Rotate::None, FROM_LEFT));
+        let mut states_lhs = vec![self.clone()];
+
+        // expansion from target state
+        seen.insert(target.clone(), (Rotate::None, FROM_RIGHT));
+        let mut states_rhs = vec![target.clone()];
+
+        // return state connected to left expansion, right expansion, and move to bridge the gap
         let (sl, sr, act) = 'main: loop {
             print!("exploring depth {}. lhs. ", depth);
             // expand search from the left
@@ -515,16 +516,19 @@ impl BasicCube {
                 for r in possible_moves {
                     let new_state = start_state.rotated(r);
 
-                    if seen_rhs.contains_key(&new_state) {
-                        break 'main (start_state, new_state, r);
-                    }
-
-                    if seen_lhs.contains_key(&new_state) {
-                        continue;
-                    } else {
-                        states_explored += 1;
-                        seen_lhs.insert(new_state.clone(), r);
-                        new_states.push(new_state);
+                    match seen.get(&new_state) {
+                        None => {
+                            states_explored += 1;
+                            seen.insert(new_state.clone(), (r, FROM_LEFT));
+                            new_states.push(new_state);
+                        }
+                        Some((_, FROM_RIGHT)) => {
+                            break 'main (start_state, new_state, r);
+                        }
+                        Some((_, FROM_LEFT)) => {
+                            continue;
+                        }
+                        _ => unreachable!(),
                     }
                 }
             }
@@ -536,17 +540,19 @@ impl BasicCube {
             while let Some(start_state) = states_rhs.pop() {
                 for r in possible_moves {
                     let new_state = start_state.rotated(r);
-
-                    if seen_lhs.contains_key(&new_state) {
-                        break 'main (new_state, start_state, r.prime());
-                    }
-
-                    if seen_rhs.contains_key(&new_state) {
-                        continue;
-                    } else {
-                        states_explored += 1;
-                        seen_rhs.insert(new_state.clone(), r);
-                        new_states.push(new_state);
+                    match seen.get(&new_state) {
+                        None => {
+                            states_explored += 1;
+                            seen.insert(new_state.clone(), (r, FROM_RIGHT));
+                            new_states.push(new_state);
+                        }
+                        Some((_, FROM_LEFT)) => {
+                            break 'main (new_state, start_state, r.prime());
+                        }
+                        Some((_, FROM_RIGHT)) => {
+                            continue;
+                        }
+                        _ => unreachable!(),
                     }
                 }
             }
@@ -557,21 +563,21 @@ impl BasicCube {
 
         let mut moves_trace = vec![act];
         let mut current_trace_state = sl;
-        while let Some(s) = seen_lhs.get(&current_trace_state) {
-            if *s == Rotate::None {
+        while let Some(s) = seen.get(&current_trace_state) {
+            if s.0 == Rotate::None {
                 break;
             }
-            moves_trace.push(*s);
-            current_trace_state.rotate(s.prime());
+            moves_trace.push(s.0);
+            current_trace_state.rotate(s.0.prime());
         }
         moves_trace.reverse();
         current_trace_state = sr;
-        while let Some(s) = seen_rhs.get(&current_trace_state) {
-            if *s == Rotate::None {
+        while let Some(s) = seen.get(&current_trace_state) {
+            if s.0 == Rotate::None {
                 break;
             }
-            moves_trace.push(s.prime());
-            current_trace_state.rotate(s.prime());
+            moves_trace.push(s.0.prime());
+            current_trace_state.rotate(s.0.prime());
         }
 
         println!("explored {} states", states_explored);
