@@ -879,10 +879,12 @@ impl Cube {
     }
 
     pub fn get_steps(&self, target: &Cube) -> Vec<Rotate> {
-        // get steps to solve cube
-        let mut moves = self.internal_cube.get_steps(&target.internal_cube);
-
         // get steps to orient cube
+        // TODO:
+        let mut moves = Vec::new();
+
+        // get steps to solve cube
+        moves.append(&mut self.internal_cube.get_steps(&target.internal_cube));
 
         moves
     }
