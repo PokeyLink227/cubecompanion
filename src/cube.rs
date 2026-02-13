@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+// use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 static ASCIICUBE: [[char; 25]; 17] = [
     [
@@ -492,12 +493,12 @@ impl BasicCube {
         ];
 
         // expansion from current state
-        let mut seen_lhs = HashMap::new();
+        let mut seen_lhs = FxHashMap::default();
         seen_lhs.insert(self.clone(), Rotate::None);
         let mut states_lhs = vec![self.clone()];
 
         // expansion from target state
-        let mut seen_rhs = HashMap::new();
+        let mut seen_rhs = FxHashMap::default();
         seen_rhs.insert(target.clone(), Rotate::None);
         let mut states_rhs = vec![target.clone()];
 

@@ -11,7 +11,7 @@ fn main() {
 
     let solved = Cube::solved();
     let mut scrambled = Cube::solved();
-    let moves: Vec<Rotate> = (0..5)
+    let moves: Vec<Rotate> = (0..20)
         .map(|_| Rotate::from_num(rand::random_range(0..35)))
         .collect();
     scrambled.apply_rotations(&moves);
