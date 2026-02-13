@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 static ASCIICUBE: [[char; 25]; 17] = [
     [
         ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '+', '-', '-', '-', '-', '-', '-', '-', '+', ' ',
@@ -82,6 +84,7 @@ pub enum Color {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Rotate {
+    None,
     // Face Turns
     U,
     D,
@@ -130,6 +133,7 @@ pub enum Rotate {
 impl Rotate {
     pub fn prime(self) -> Self {
         match self {
+            Self::None => Self::None,
             Self::U => Self::Up,
             Self::D => Self::Dp,
             Self::R => Self::Rp,
@@ -207,7 +211,7 @@ impl Rotate {
             33 => Self::Fwp,
             34 => Self::Bw,
             35 => Self::Bwp,
-            _ => panic!("num out of range"),
+            _ => Self::None,
         }
     }
 }
@@ -253,7 +257,7 @@ impl Color {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Face(u32);
 
 impl Face {
@@ -335,13 +339,12 @@ impl Face {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Cube {
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct BasicCube {
     faces: [Face; 6],
-    mapping: [(usize, i8); 6],
 }
 
-impl Cube {
+impl BasicCube {
     pub fn solved() -> Self {
         Self {
             faces: [
@@ -352,6 +355,239 @@ impl Cube {
                 Face::from_array(&[Color::Red; 8]),
                 Face::from_array(&[Color::Blue; 8]),
             ],
+        }
+    }
+
+    pub fn rotate(&mut self, action: Rotate) {
+        use Edge as E;
+
+        let s1: (usize, Direction);
+        let s2: [(usize, E); 4];
+
+        match action {
+            // Face Turns
+            Rotate::U => {
+                s1 = (0, Direction::Clockwise);
+                s2 = [(1, E::Top), (5, E::Top), (4, E::Bottom), (2, E::Top)];
+            }
+            Rotate::Up => {
+                s1 = (0, Direction::CounterClockwise);
+                s2 = [(1, E::Top), (2, E::Top), (4, E::Bottom), (5, E::Top)];
+            }
+            Rotate::D => {
+                s1 = (3, Direction::Clockwise);
+                s2 = [(1, E::Bottom), (2, E::Bottom), (4, E::Top), (5, E::Bottom)];
+            }
+            Rotate::Dp => {
+                s1 = (3, Direction::CounterClockwise);
+                s2 = [(1, E::Bottom), (5, E::Bottom), (4, E::Top), (2, E::Bottom)];
+            }
+            Rotate::R => {
+                s1 = (2, Direction::Clockwise);
+                s2 = [(0, E::Right), (4, E::Right), (3, E::Right), (1, E::Right)];
+            }
+            Rotate::Rp => {
+                s1 = (2, Direction::CounterClockwise);
+                s2 = [(0, E::Right), (1, E::Right), (3, E::Right), (4, E::Right)];
+            }
+            Rotate::L => {
+                s1 = (5, Direction::Clockwise);
+                s2 = [(0, E::Left), (1, E::Left), (3, E::Left), (4, E::Left)];
+            }
+            Rotate::Lp => {
+                s1 = (5, Direction::CounterClockwise);
+                s2 = [(0, E::Left), (4, E::Left), (3, E::Left), (1, E::Left)];
+            }
+            Rotate::F => {
+                s1 = (1, Direction::Clockwise);
+                s2 = [(0, E::Bottom), (2, E::Left), (3, E::Top), (5, E::Right)];
+            }
+            Rotate::Fp => {
+                s1 = (1, Direction::CounterClockwise);
+                s2 = [(0, E::Bottom), (5, E::Right), (3, E::Top), (2, E::Left)];
+            }
+            Rotate::B => {
+                s1 = (4, Direction::Clockwise);
+                s2 = [(0, E::Top), (5, E::Left), (3, E::Bottom), (2, E::Right)];
+            }
+            Rotate::Bp => {
+                s1 = (4, Direction::CounterClockwise);
+                s2 = [(0, E::Top), (2, E::Right), (3, E::Bottom), (5, E::Left)];
+            }
+            _ => return,
+        }
+
+        // Step 1 rotate pieces on face
+        self.faces[s1.0].rotate_mut(s1.1);
+
+        // Step 2 move pieces between faces
+        let a = self.faces[s2[0].0].get_edge(s2[0].1);
+        let b = self.faces[s2[1].0].set_edge_mut(s2[1].1, a);
+        let c = self.faces[s2[2].0].set_edge_mut(s2[2].1, b);
+        let d = self.faces[s2[3].0].set_edge_mut(s2[3].1, c);
+        self.faces[s2[0].0].set_edge_mut(s2[0].1, d);
+    }
+
+    pub fn rotated(&self, action: Rotate) -> Self {
+        let mut cpy = self.clone();
+        cpy.rotate(action);
+        cpy
+    }
+
+    pub fn apply_rotations(&mut self, actions: &[Rotate]) {
+        for &a in actions {
+            self.rotate(a);
+        }
+    }
+
+    pub fn print(&self) {
+        let offsets = [(10, 5), (10, 9), (18, 9), (10, 13), (10, 1), (2, 9)];
+        let sq_off = [
+            (0, 0),
+            (2, 0),
+            (4, 0),
+            (4, 1),
+            (4, 2),
+            (2, 2),
+            (0, 2),
+            (0, 1),
+        ];
+        // can optimize by using bytes then transmuting to a str
+        let colors = ['0', 'W', 'O', 'G', 'Y', 'R', 'B', '7'];
+        let mut ac: [[char; 25]; 17] = ASCIICUBE.clone();
+
+        // populate the proper colors
+        for (i, f) in self.faces.iter().enumerate() {
+            for sq in 0..8 {
+                let x = offsets[i].0 + sq_off[sq].0;
+                let y = offsets[i].1 + sq_off[sq].1;
+                let c = ((f.0 >> ((7 - sq) * 3)) & 0b0111) as usize;
+                ac[y][x] = colors[c];
+            }
+        }
+
+        // print the cube
+        for line in ac {
+            for ch in line {
+                print!("{ch}");
+            }
+            println!();
+        }
+    }
+
+    pub fn get_steps(&self, target: &Self) -> Vec<Rotate> {
+        let possible_moves = [
+            Rotate::U,
+            Rotate::D,
+            Rotate::R,
+            Rotate::L,
+            Rotate::F,
+            Rotate::B,
+            Rotate::Up,
+            Rotate::Dp,
+            Rotate::Rp,
+            Rotate::Lp,
+            Rotate::Fp,
+            Rotate::Bp,
+        ];
+
+        // expansion from current state
+        let mut seen_lhs = HashMap::new();
+        seen_lhs.insert(self.clone(), Rotate::None);
+        let mut states_lhs = vec![self.clone()];
+
+        // expansion from target state
+        let mut seen_rhs = HashMap::new();
+        seen_rhs.insert(target.clone(), Rotate::None);
+        let mut states_rhs = vec![target.clone()];
+
+        let mut new_states = Vec::new();
+
+        let mut states_explored: usize = 1;
+        let mut depth: usize = 1;
+
+        let (sl, sr, act) = 'main: loop {
+            print!("exploring depth {}. lhs. ", depth);
+            // expand search from the left
+            new_states.clear();
+            while let Some(start_state) = states_lhs.pop() {
+                for r in possible_moves {
+                    let new_state = start_state.rotated(r);
+
+                    if seen_rhs.contains_key(&new_state) {
+                        break 'main (start_state, new_state, r);
+                    }
+
+                    if seen_lhs.contains_key(&new_state) {
+                        continue;
+                    } else {
+                        states_explored += 1;
+                        seen_lhs.insert(new_state.clone(), r);
+                        new_states.push(new_state);
+                    }
+                }
+            }
+            std::mem::swap(&mut states_lhs, &mut new_states);
+
+            println!("rhs.");
+            // expand search from the right
+            new_states.clear();
+            while let Some(start_state) = states_rhs.pop() {
+                for r in possible_moves {
+                    let new_state = start_state.rotated(r);
+
+                    if seen_lhs.contains_key(&new_state) {
+                        break 'main (new_state, start_state, r.prime());
+                    }
+
+                    if seen_rhs.contains_key(&new_state) {
+                        continue;
+                    } else {
+                        states_explored += 1;
+                        seen_rhs.insert(new_state.clone(), r);
+                        new_states.push(new_state);
+                    }
+                }
+            }
+            std::mem::swap(&mut states_rhs, &mut new_states);
+
+            depth += 1;
+        };
+
+        let mut moves_trace = vec![act];
+        let mut current_trace_state = sl;
+        while let Some(s) = seen_lhs.get(&current_trace_state) {
+            if *s == Rotate::None {
+                break;
+            }
+            moves_trace.push(*s);
+            current_trace_state.rotate(s.prime());
+        }
+        moves_trace.reverse();
+        current_trace_state = sr;
+        while let Some(s) = seen_rhs.get(&current_trace_state) {
+            if *s == Rotate::None {
+                break;
+            }
+            moves_trace.push(s.prime());
+            current_trace_state.rotate(s.prime());
+        }
+
+        println!("explored {} states", states_explored);
+        moves_trace
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Cube {
+    internal_cube: BasicCube,
+    mapping: [(usize, i8); 6],
+}
+
+impl Cube {
+    pub fn solved() -> Self {
+        Self {
+            internal_cube: BasicCube::solved(),
             mapping: [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0)],
         }
     }
@@ -369,6 +605,8 @@ impl Cube {
         let s2: [(usize, E); 4];
 
         match action {
+            Rotate::None => return,
+
             // Cube Rotations
             Rotate::x => {
                 let temp = self.mapping[0];
@@ -575,18 +813,18 @@ impl Cube {
         }
 
         // Step 1 rotate pieces on face
-        self.faces[self.mapping[s1.0].0].rotate_mut(s1.1);
+        self.internal_cube.faces[self.mapping[s1.0].0].rotate_mut(s1.1);
 
-        // Step 2 move pieces between faces
-        let a =
-            self.faces[self.mapping[s2[0].0].0].get_edge(s2[0].1.rotate(self.mapping[s2[0].0].1));
-        let b = self.faces[self.mapping[s2[1].0].0]
+        // Step 2 move pieces between internal_cube.faces
+        let a = self.internal_cube.faces[self.mapping[s2[0].0].0]
+            .get_edge(s2[0].1.rotate(self.mapping[s2[0].0].1));
+        let b = self.internal_cube.faces[self.mapping[s2[1].0].0]
             .set_edge_mut(s2[1].1.rotate(self.mapping[s2[1].0].1), a);
-        let c = self.faces[self.mapping[s2[2].0].0]
+        let c = self.internal_cube.faces[self.mapping[s2[2].0].0]
             .set_edge_mut(s2[2].1.rotate(self.mapping[s2[2].0].1), b);
-        let d = self.faces[self.mapping[s2[3].0].0]
+        let d = self.internal_cube.faces[self.mapping[s2[3].0].0]
             .set_edge_mut(s2[3].1.rotate(self.mapping[s2[3].0].1), c);
-        self.faces[self.mapping[s2[0].0].0]
+        self.internal_cube.faces[self.mapping[s2[0].0].0]
             .set_edge_mut(s2[0].1.rotate(self.mapping[s2[0].0].1), d);
     }
 
@@ -616,7 +854,7 @@ impl Cube {
         // for (i, f) in self.faces.iter().enumerate() {
         for i in 0..6 {
             let i_m = self.mapping[i];
-            let f = self.faces[i_m.0].rotated(-i_m.1);
+            let f = self.internal_cube.faces[i_m.0].rotated(-i_m.1);
             for sq in 0..8 {
                 let x = offsets[i].0 + sq_off[sq].0;
                 let y = offsets[i].1 + sq_off[sq].1;
@@ -636,39 +874,17 @@ impl Cube {
         s
     }
 
-    pub fn print(&self) {
-        let offsets = [(10, 5), (10, 9), (18, 9), (10, 13), (10, 1), (2, 9)];
-        let sq_off = [
-            (0, 0),
-            (2, 0),
-            (4, 0),
-            (4, 1),
-            (4, 2),
-            (2, 2),
-            (0, 2),
-            (0, 1),
-        ];
-        // can optimize by using bytes then transmuting to a str
-        let colors = ['0', 'W', 'O', 'G', 'Y', 'R', 'B', '7'];
-        let mut ac: [[char; 25]; 17] = ASCIICUBE.clone();
+    pub fn print_normalized(&self) {
+        self.internal_cube.print();
+    }
 
-        // populate the proper colors
-        for (i, f) in self.faces.iter().enumerate() {
-            for sq in 0..8 {
-                let x = offsets[i].0 + sq_off[sq].0;
-                let y = offsets[i].1 + sq_off[sq].1;
-                let c = ((f.0 >> ((7 - sq) * 3)) & 0b0111) as usize;
-                ac[y][x] = colors[c];
-            }
-        }
+    pub fn get_steps(&self, target: &Cube) -> Vec<Rotate> {
+        // get steps to solve cube
+        let mut moves = self.internal_cube.get_steps(&target.internal_cube);
 
-        // print the cube
-        for line in ac {
-            for ch in line {
-                print!("{ch}");
-            }
-            println!();
-        }
+        // get steps to orient cube
+
+        moves
     }
 
     // pub fn get_face(&self, face: Color) -> &Face {
@@ -686,14 +902,14 @@ mod tests {
         cube.rotate(Rotate::R);
         cube.rotate(Rotate::x);
         cube.rotate(Rotate::U);
-        cube.print();
+        cube.print_normalized();
 
         let mut cube2 = Cube::solved();
         cube2.rotate(Rotate::R);
         cube2.rotate(Rotate::F);
-        cube2.print();
+        cube2.print_normalized();
 
-        assert_eq!(cube.faces, cube2.faces);
+        assert_eq!(cube.internal_cube, cube2.internal_cube);
     }
 
     #[test]
@@ -702,7 +918,7 @@ mod tests {
         cube.rotate(Rotate::Mp);
         cube.rotate(Rotate::U);
         cube.rotate(Rotate::Mp);
-        cube.print();
+        cube.print_normalized();
 
         let mut cube2 = Cube::solved();
         cube2.rotate(Rotate::Rp);
@@ -710,9 +926,59 @@ mod tests {
         cube2.rotate(Rotate::F);
         cube2.rotate(Rotate::Rp);
         cube2.rotate(Rotate::L);
-        cube2.print();
+        cube2.print_normalized();
 
-        assert_eq!(cube.faces, cube2.faces);
+        assert_eq!(cube.internal_cube, cube2.internal_cube);
+    }
+
+    #[test]
+    fn basic_scramble_5mv_1000x() {
+        let mv = 5;
+        let reps = 1000;
+        let solved = Cube::solved();
+
+        for _ in 0..reps {
+            let mut cube = Cube::solved();
+            for _ in 0..mv {
+                cube.rotate(Rotate::from_num(rand::random_range(0..12)));
+            }
+            cube.apply_rotations(&cube.get_steps(&solved));
+            assert_eq!(cube.internal_cube, solved.internal_cube);
+        }
+    }
+
+    #[test]
+    fn adv_scramble_5mv_1000x() {
+        let mv = 5;
+        let reps = 1000;
+        let solved = Cube::solved();
+
+        for _ in 0..reps {
+            let mut cube = Cube::solved();
+            for _ in 0..mv {
+                cube.rotate(Rotate::from_num(rand::random_range(0..35)));
+            }
+            // must apply to internal cube to avoid dealing with rotations
+            cube.internal_cube.apply_rotations(&cube.get_steps(&solved));
+
+            assert_eq!(cube.internal_cube, solved.internal_cube);
+        }
+    }
+
+    #[test]
+    fn basic_scramble_10mv_20x() {
+        let mv = 10;
+        let reps = 20;
+        let solved = Cube::solved();
+
+        for _ in 0..reps {
+            let mut cube = Cube::solved();
+            for _ in 0..mv {
+                cube.rotate(Rotate::from_num(rand::random_range(0..12)));
+            }
+            cube.apply_rotations(&cube.get_steps(&solved));
+            assert_eq!(cube.internal_cube, solved.internal_cube);
+        }
     }
 
     #[test]
@@ -730,78 +996,80 @@ mod tests {
             Rotate::Up,
             Rotate::F,
         ]);
-        cube.print();
+        cube.print_normalized();
 
         use crate::cube::Color as C;
 
         let target = Cube {
-            faces: [
-                Face::from_array(&[
-                    C::Orange,
-                    C::White,
-                    C::Yellow,
-                    C::White,
-                    C::Red,
-                    C::Red,
-                    C::Red,
-                    C::Orange,
-                ]),
-                Face::from_array(&[
-                    C::Blue,
-                    C::Blue,
-                    C::Green,
-                    C::Yellow,
-                    C::Yellow,
-                    C::White,
-                    C::White,
-                    C::Yellow,
-                ]),
-                Face::from_array(&[
-                    C::Yellow,
-                    C::Red,
-                    C::Green,
-                    C::Red,
-                    C::Red,
-                    C::Orange,
-                    C::Blue,
-                    C::Blue,
-                ]),
-                Face::from_array(&[
-                    C::Blue,
-                    C::Blue,
-                    C::Orange,
-                    C::Green,
-                    C::White,
-                    C::Orange,
-                    C::Orange,
-                    C::Yellow,
-                ]),
-                Face::from_array(&[
-                    C::Blue,
-                    C::White,
-                    C::Green,
-                    C::Green,
-                    C::Orange,
-                    C::Green,
-                    C::Green,
-                    C::Blue,
-                ]),
-                Face::from_array(&[
-                    C::White,
-                    C::Yellow,
-                    C::Yellow,
-                    C::Green,
-                    C::Red,
-                    C::Red,
-                    C::White,
-                    C::Orange,
-                ]),
-            ],
+            internal_cube: BasicCube {
+                faces: [
+                    Face::from_array(&[
+                        C::Orange,
+                        C::White,
+                        C::Yellow,
+                        C::White,
+                        C::Red,
+                        C::Red,
+                        C::Red,
+                        C::Orange,
+                    ]),
+                    Face::from_array(&[
+                        C::Blue,
+                        C::Blue,
+                        C::Green,
+                        C::Yellow,
+                        C::Yellow,
+                        C::White,
+                        C::White,
+                        C::Yellow,
+                    ]),
+                    Face::from_array(&[
+                        C::Yellow,
+                        C::Red,
+                        C::Green,
+                        C::Red,
+                        C::Red,
+                        C::Orange,
+                        C::Blue,
+                        C::Blue,
+                    ]),
+                    Face::from_array(&[
+                        C::Blue,
+                        C::Blue,
+                        C::Orange,
+                        C::Green,
+                        C::White,
+                        C::Orange,
+                        C::Orange,
+                        C::Yellow,
+                    ]),
+                    Face::from_array(&[
+                        C::Blue,
+                        C::White,
+                        C::Green,
+                        C::Green,
+                        C::Orange,
+                        C::Green,
+                        C::Green,
+                        C::Blue,
+                    ]),
+                    Face::from_array(&[
+                        C::White,
+                        C::Yellow,
+                        C::Yellow,
+                        C::Green,
+                        C::Red,
+                        C::Red,
+                        C::White,
+                        C::Orange,
+                    ]),
+                ],
+            },
             mapping: [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0)],
         };
-        target.print();
+        target.print_normalized();
 
-        assert_eq!(cube.faces, target.faces);
+        assert_eq!(cube.internal_cube, target.internal_cube);
     }
 
     #[test]
@@ -830,7 +1098,7 @@ mod tests {
             Rotate::U,
             Rotate::U,
         ]);
-        cube.print();
+        cube.print_normalized();
 
         let mut cube2 = Cube::solved();
         cube2.apply_rotations(&[
@@ -850,8 +1118,8 @@ mod tests {
             Rotate::Up,
             Rotate::Up,
         ]);
-        cube2.print();
+        cube2.print_normalized();
 
-        assert_eq!(cube.faces, cube2.faces);
+        assert_eq!(cube.internal_cube, cube2.internal_cube);
     }
 }
